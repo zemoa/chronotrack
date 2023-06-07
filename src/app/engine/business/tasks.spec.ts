@@ -1,17 +1,10 @@
 import { TestBed } from "@angular/core/testing";
 import { NgxsModule, Store } from "@ngxs/store";
 import { TasksStore } from "./tasks.store";
-import { AddTask, RemoveTask, StartWorkingOnTask } from "../api/tasks.actions";
+import { AddTask, RemoveTask, StartWorkingOnTask, StopWorkingOnTask } from "../api/tasks.actions";
 import { TaskStateModel } from "../api/tasks.statemodel";
 import { DateUtils } from "./utils/date.utils";
-import {
-    mockAll,
-    mockComponent,
-    mockDirective,
-    mockNg,
-    mockPipe,
-    mockProvider,
-  } from 'ng-mockito';
+import { mockNg } from 'ng-mockito';
 import { mock, when } from 'ts-mockito';
 
 export const INIT_STATE : TaskStateModel = {
@@ -50,12 +43,14 @@ describe('Tasks', () => {
         const task1 = state.taskList[1];
         expect(task1.label).toBe("A task 1");
         expect(task1.start).toBe(undefined);
+        expect(task1.stop).toBe(undefined);
         expect(task1.id).toBe(1);
         expect(task1.created).toEqual(new Date('2023-06-07T21:19:22'));
 
         const task2 = state.taskList[2];
         expect(task2.label).toBe("A task 2");
         expect(task2.start).toBe(undefined);
+        expect(task2.stop).toBe(undefined);
         expect(task2.id).toBe(2);
         expect(task2.created).toEqual(new Date('2023-06-07T21:23:34'));
     });
@@ -68,6 +63,7 @@ describe('Tasks', () => {
         const task1 = state.taskList[1];
         expect(task1.label).toBe("A task");
         expect(task1.start).toBe(undefined);
+        expect(task1.stop).toBe(undefined);
         expect(task1.id).toBe(1);
 
         store.dispatch(new RemoveTask(1));
@@ -77,12 +73,24 @@ describe('Tasks', () => {
         expect(task0.id).toBe(0);
     });
 
-    it('Start a task', () => {
+    it('Start working on a task', () => {
         when(mockedDateUtils.now).thenReturn(() => new Date('2023-06-07T22:33:34'));
         store.dispatch(new StartWorkingOnTask(0));
     
         const state : TaskStateModel = store.selectSnapshot(state => state.tasks);
         const selectedTask = state.taskList.filter(task => task.id === 0)[0];
         expect(selectedTask.start).toEqual(new Date('2023-06-07T22:33:34'));
+        expect(selectedTask.stop).toBe(undefined);
+    });
+
+    it('Stop working on a task', () => {
+        store.dispatch(new StartWorkingOnTask(0));
+        when(mockedDateUtils.now).thenReturn(() => new Date('2023-06-07T22:33:34'));
+        store.dispatch(new StopWorkingOnTask(0));
+    
+        const state : TaskStateModel = store.selectSnapshot(state => state.tasks);
+        const selectedTask = state.taskList.filter(task => task.id === 0)[0];
+        expect(selectedTask.start).toEqual(new Date('2023-06-07T21:19:22'));
+        expect(selectedTask.stop).toEqual(new Date('2023-06-07T22:33:34'));
     });
 });

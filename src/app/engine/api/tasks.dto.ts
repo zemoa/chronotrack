@@ -3,4 +3,5 @@ export interface TaskDto {
     label: string;
     created: Date;
     start?: Date;
+    stop?: Date;
 }

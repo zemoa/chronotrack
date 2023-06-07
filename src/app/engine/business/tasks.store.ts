@@ -1,7 +1,7 @@
 import { Action, State, StateContext, Store } from "@ngxs/store";
 import { TaskStateModel } from "../api/tasks.statemodel";
 import { Injectable } from "@angular/core";
-import { AddTask, RemoveTask, StartWorkingOnTask } from "../api/tasks.actions";
+import { AddTask, RemoveTask, StartWorkingOnTask, StopWorkingOnTask } from "../api/tasks.actions";
 import { patch, removeItem, updateItem } from "@ngxs/store/operators";
 import { TaskDto } from "../api/tasks.dto";
 import { DateUtils } from "./utils/date.utils";
@@ -37,7 +37,6 @@ export class TasksStore {
 
     @Action(RemoveTask)
     removeTask(ctx: StateContext<TaskStateModel>, action: RemoveTask) {
-        const state = ctx.getState();
         ctx.setState(
             patch<TaskStateModel>({
                 taskList: removeItem<TaskDto>(task => task.id === action.id)
@@ -47,11 +46,20 @@ export class TasksStore {
 
     @Action(StartWorkingOnTask)
     startWorkingOnTask(ctx: StateContext<TaskStateModel>, action: StartWorkingOnTask) {
-        const state = ctx.getState();
         ctx.setState(
             patch<TaskStateModel>({
                 taskList: updateItem<TaskDto>(task => task.id === action.id,
                     patch({start: this.dateUtils.now()}))
+            })
+        )
+    }
+
+    @Action(StopWorkingOnTask)
+    stopWorkingOnTask(ctx: StateContext<TaskStateModel>, action: StopWorkingOnTask) {
+        ctx.setState(
+            patch<TaskStateModel>({
+                taskList: updateItem<TaskDto>(task => task.id === action.id,
+                    patch({stop: this.dateUtils.now()}))
             })
         )
     }
