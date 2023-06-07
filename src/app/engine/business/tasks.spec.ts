@@ -5,8 +5,11 @@ import { AddTask, RemoveTask, StartWorkingOnTask, StopWorkingOnTask } from "../a
 import { TaskStateModel } from "../api/tasks.statemodel";
 import { DateUtils } from "./utils/date.utils";
 import { mockNg } from 'ng-mockito';
-import { mock, when } from 'ts-mockito';
+import { mock, when, verify, anything } from 'ts-mockito';
 import { StopWorkingOnNotStartedTaskError } from "../api/tasks.dto";
+import { TaskRepository } from "../spi/tasks.repository";
+import { TasksUtils } from "./utils/tasks.utils";
+import { Task } from "../spi/tasks.entity";
 
 export const INIT_STATE : TaskStateModel = {
     taskList: [{
@@ -21,10 +24,15 @@ describe('Tasks', () => {
     let mockedDateUtils: DateUtils;
     beforeEach(() => {
         mockedDateUtils = mock(DateUtils);
+        const taskRepository = mock<TaskRepository>();
         when(mockedDateUtils.now).thenReturn(() => new Date('2023-06-07T21:19:22'));
+        when(taskRepository.save(anything())).thenCall((taskToSave: Task) => {
+            return taskToSave;
+        })
         TestBed.configureTestingModule({
             imports: [NgxsModule.forRoot([TasksStore])],
-            providers: [mockNg(mockedDateUtils)]
+            providers: [mockNg(mockedDateUtils), mockNg(taskRepository), TasksUtils],
+            teardown: {destroyAfterEach: false} 
         });
         
         store = TestBed.inject(Store);
@@ -55,6 +63,8 @@ describe('Tasks', () => {
         expect(task2.stop).toBe(undefined);
         expect(task2.id).toBe(2);
         expect(task2.created).toEqual(new Date('2023-06-07T21:23:34'));
+
+        verify(taskRepository.save(anything())).twice();
     });
 
     it('Add a task and then remove it', () => {

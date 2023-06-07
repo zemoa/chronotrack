@@ -5,6 +5,9 @@ import { AddTask, RemoveTask, StartWorkingOnTask, StopWorkingOnTask } from "../a
 import { patch, removeItem, updateItem } from "@ngxs/store/operators";
 import { StopWorkingOnNotStartedTaskError, TaskDto } from "../api/tasks.dto";
 import { DateUtils } from "./utils/date.utils";
+import { TaskRepository } from "../spi/tasks.repository";
+import { Task } from "../spi/tasks.entity";
+import { TasksUtils } from "./utils/tasks.utils";
 
 @State<TaskStateModel>({
     name: 'tasks',
@@ -14,7 +17,7 @@ import { DateUtils } from "./utils/date.utils";
 })
 @Injectable()
 export class TasksStore {
-    constructor(private stroe:Store, private dateUtils: DateUtils){}
+    constructor(private store:Store, private dateUtils: DateUtils, private tasksUtils: TasksUtils, private taskRepository: TaskRepository){}
 
     @Action(AddTask)
     addTask(ctx: StateContext<TaskStateModel>, action: AddTask) {
@@ -23,14 +26,17 @@ export class TasksStore {
         if(state.taskList.length > 0) {
             newTaskIndex = state.taskList[state.taskList.length - 1].id + 1;
         }
+        
+        const taskToSave : Task = {
+            id:newTaskIndex,
+            label: action.label,
+            created: this.dateUtils.now()
+        };
+        this.taskRepository.save(taskToSave);
         ctx.patchState({
             taskList: [
                 ...state.taskList,
-                {
-                    id:newTaskIndex,
-                    label: action.label,
-                    created: this.dateUtils.now()
-                }
+                this.tasksUtils.mapToDto(taskToSave)
             ]
         });
     }
