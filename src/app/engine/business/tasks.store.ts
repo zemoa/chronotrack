@@ -1,9 +1,10 @@
 import { Action, State, StateContext, Store } from "@ngxs/store";
 import { TaskStateModel } from "../api/tasks.statemodel";
 import { Injectable } from "@angular/core";
-import { AddTask, RemoveTask } from "../api/tasks.actions";
-import { patch, removeItem } from "@ngxs/store/operators";
+import { AddTask, RemoveTask, StartWorkingOnTask } from "../api/tasks.actions";
+import { patch, removeItem, updateItem } from "@ngxs/store/operators";
 import { TaskDto } from "../api/tasks.dto";
+import { DateUtils } from "./utils/date.utils";
 
 @State<TaskStateModel>({
     name: 'tasks',
@@ -13,7 +14,7 @@ import { TaskDto } from "../api/tasks.dto";
 })
 @Injectable()
 export class TasksStore {
-    constructor(private stroe:Store){}
+    constructor(private stroe:Store, private dateUtils: DateUtils){}
 
     @Action(AddTask)
     addTask(ctx: StateContext<TaskStateModel>, action: AddTask) {
@@ -27,9 +28,8 @@ export class TasksStore {
                 ...state.taskList,
                 {
                     id:newTaskIndex,
-                    duiration: 0,
                     label: action.label,
-                    start: new Date()
+                    created: this.dateUtils.now()
                 }
             ]
         });
@@ -41,6 +41,17 @@ export class TasksStore {
         ctx.setState(
             patch<TaskStateModel>({
                 taskList: removeItem<TaskDto>(task => task.id === action.id)
+            })
+        )
+    }
+
+    @Action(StartWorkingOnTask)
+    startWorkingOnTask(ctx: StateContext<TaskStateModel>, action: StartWorkingOnTask) {
+        const state = ctx.getState();
+        ctx.setState(
+            patch<TaskStateModel>({
+                taskList: updateItem<TaskDto>(task => task.id === action.id,
+                    patch({start: this.dateUtils.now()}))
             })
         )
     }

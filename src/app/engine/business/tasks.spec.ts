@@ -1,56 +1,88 @@
 import { TestBed } from "@angular/core/testing";
 import { NgxsModule, Store } from "@ngxs/store";
 import { TasksStore } from "./tasks.store";
-import { AddTask, RemoveTask } from "../api/tasks.actions";
+import { AddTask, RemoveTask, StartWorkingOnTask } from "../api/tasks.actions";
 import { TaskStateModel } from "../api/tasks.statemodel";
+import { DateUtils } from "./utils/date.utils";
+import {
+    mockAll,
+    mockComponent,
+    mockDirective,
+    mockNg,
+    mockPipe,
+    mockProvider,
+  } from 'ng-mockito';
+import { mock, when } from 'ts-mockito';
 
 export const INIT_STATE : TaskStateModel = {
     taskList: [{
-        duiration: 123,
         id: 0,
         label: "Task 1",
-        start: new Date()
+        created: new Date('2023-06-07T19:00:01')
     }]
   };
 
 describe('Tasks', () => {
     let store: Store;
+    let mockedDateUtils: DateUtils;
     beforeEach(() => {
+        mockedDateUtils = mock(DateUtils);
+        when(mockedDateUtils.now).thenReturn(() => new Date('2023-06-07T21:19:22'));
         TestBed.configureTestingModule({
-            imports: [NgxsModule.forRoot([TasksStore])]
+            imports: [NgxsModule.forRoot([TasksStore])],
+            providers: [mockNg(mockedDateUtils)]
         });
+        
         store = TestBed.inject(Store);
+        store.reset({
+            ...store.snapshot(),
+            tasks: INIT_STATE
+          });
     })
 
     it('Add a task', () => {
         store.dispatch(new AddTask("A task 1"));
+        when(mockedDateUtils.now).thenReturn(() => new Date('2023-06-07T21:23:34'));
         store.dispatch(new AddTask("A task 2"));
     
         const state : TaskStateModel = store.selectSnapshot(state => state.tasks);
-        expect(state.taskList.length).toBe(2);
-        const task1 = state.taskList[0];
+        expect(state.taskList.length).toBe(3);
+        const task1 = state.taskList[1];
         expect(task1.label).toBe("A task 1");
-        expect(task1.duiration).toBe(0);
-        expect(task1.id).toBe(0);
+        expect(task1.start).toBe(undefined);
+        expect(task1.id).toBe(1);
+        expect(task1.created).toEqual(new Date('2023-06-07T21:19:22'));
 
-        const task2 = state.taskList[1];
+        const task2 = state.taskList[2];
         expect(task2.label).toBe("A task 2");
-        expect(task2.duiration).toBe(0);
-        expect(task2.id).toBe(1);
+        expect(task2.start).toBe(undefined);
+        expect(task2.id).toBe(2);
+        expect(task2.created).toEqual(new Date('2023-06-07T21:23:34'));
     });
 
     it('Add a task and then remove it', () => {
         store.dispatch(new AddTask("A task"));
     
         const state : TaskStateModel = store.selectSnapshot(state => state.tasks);
-        expect(state.taskList.length).toBe(1);
-        const task1 = state.taskList[0];
+        expect(state.taskList.length).toBe(2);
+        const task1 = state.taskList[1];
         expect(task1.label).toBe("A task");
-        expect(task1.duiration).toBe(0);
-        expect(task1.id).toBe(0);
+        expect(task1.start).toBe(undefined);
+        expect(task1.id).toBe(1);
 
-        store.dispatch(new RemoveTask(0));
+        store.dispatch(new RemoveTask(1));
         const state2 : TaskStateModel = store.selectSnapshot(state => state.tasks);
-        expect(state2.taskList.length).toBe(0);
+        expect(state2.taskList.length).toBe(1);
+        const task0 = state.taskList[0];
+        expect(task0.id).toBe(0);
+    });
+
+    it('Start a task', () => {
+        when(mockedDateUtils.now).thenReturn(() => new Date('2023-06-07T22:33:34'));
+        store.dispatch(new StartWorkingOnTask(0));
+    
+        const state : TaskStateModel = store.selectSnapshot(state => state.tasks);
+        const selectedTask = state.taskList.filter(task => task.id === 0)[0];
+        expect(selectedTask.start).toEqual(new Date('2023-06-07T22:33:34'));
     });
 });

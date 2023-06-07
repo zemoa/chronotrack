@@ -7,3 +7,8 @@ export class RemoveTask {
     static readonly type ='[Task] Remove Task';
     constructor(public id: number){}
 }
+
+export class StartWorkingOnTask {
+    static readonly type ='[Task] Start Working On Task';
+    constructor(public id: number){}
+}
