@@ -3,7 +3,7 @@ import { TaskStateModel } from "../api/tasks.statemodel";
 import { Injectable } from "@angular/core";
 import { AddTask, RemoveTask, StartWorkingOnTask, StopWorkingOnTask } from "../api/tasks.actions";
 import { patch, removeItem, updateItem } from "@ngxs/store/operators";
-import { TaskDto } from "../api/tasks.dto";
+import { StopWorkingOnNotStartedTaskError, TaskDto } from "../api/tasks.dto";
 import { DateUtils } from "./utils/date.utils";
 
 @State<TaskStateModel>({
@@ -56,11 +56,20 @@ export class TasksStore {
 
     @Action(StopWorkingOnTask)
     stopWorkingOnTask(ctx: StateContext<TaskStateModel>, action: StopWorkingOnTask) {
-        ctx.setState(
-            patch<TaskStateModel>({
-                taskList: updateItem<TaskDto>(task => task.id === action.id,
-                    patch({stop: this.dateUtils.now()}))
-            })
-        )
+        const state = ctx.getState();
+        const taskListfilterd = state.taskList.filter(task => task.id === action.id);
+        if(taskListfilterd && taskListfilterd.length == 1) {
+            const task = taskListfilterd[0];
+            if(task.start) {
+                ctx.setState(
+                    patch<TaskStateModel>({
+                        taskList: updateItem<TaskDto>(task => task.id === action.id,
+                            patch({stop: this.dateUtils.now()}))
+                    })
+                )
+            } else {
+                ctx.setState(patch({lastError : new StopWorkingOnNotStartedTaskError("")}))
+            }            
+        }        
     }
 }

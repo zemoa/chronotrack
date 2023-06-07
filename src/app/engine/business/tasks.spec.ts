@@ -6,6 +6,7 @@ import { TaskStateModel } from "../api/tasks.statemodel";
 import { DateUtils } from "./utils/date.utils";
 import { mockNg } from 'ng-mockito';
 import { mock, when } from 'ts-mockito';
+import { StopWorkingOnNotStartedTaskError } from "../api/tasks.dto";
 
 export const INIT_STATE : TaskStateModel = {
     taskList: [{
@@ -39,6 +40,7 @@ describe('Tasks', () => {
         store.dispatch(new AddTask("A task 2"));
     
         const state : TaskStateModel = store.selectSnapshot(state => state.tasks);
+        expect(state.lastError).toBe(undefined);
         expect(state.taskList.length).toBe(3);
         const task1 = state.taskList[1];
         expect(task1.label).toBe("A task 1");
@@ -59,6 +61,7 @@ describe('Tasks', () => {
         store.dispatch(new AddTask("A task"));
     
         const state : TaskStateModel = store.selectSnapshot(state => state.tasks);
+        expect(state.lastError).toBe(undefined);
         expect(state.taskList.length).toBe(2);
         const task1 = state.taskList[1];
         expect(task1.label).toBe("A task");
@@ -68,6 +71,7 @@ describe('Tasks', () => {
 
         store.dispatch(new RemoveTask(1));
         const state2 : TaskStateModel = store.selectSnapshot(state => state.tasks);
+        expect(state2.lastError).toBe(undefined);
         expect(state2.taskList.length).toBe(1);
         const task0 = state.taskList[0];
         expect(task0.id).toBe(0);
@@ -78,6 +82,7 @@ describe('Tasks', () => {
         store.dispatch(new StartWorkingOnTask(0));
     
         const state : TaskStateModel = store.selectSnapshot(state => state.tasks);
+        expect(state.lastError).toBe(undefined);
         const selectedTask = state.taskList.filter(task => task.id === 0)[0];
         expect(selectedTask.start).toEqual(new Date('2023-06-07T22:33:34'));
         expect(selectedTask.stop).toBe(undefined);
@@ -89,8 +94,18 @@ describe('Tasks', () => {
         store.dispatch(new StopWorkingOnTask(0));
     
         const state : TaskStateModel = store.selectSnapshot(state => state.tasks);
+        expect(state.lastError).toBe(undefined);
         const selectedTask = state.taskList.filter(task => task.id === 0)[0];
         expect(selectedTask.start).toEqual(new Date('2023-06-07T21:19:22'));
         expect(selectedTask.stop).toEqual(new Date('2023-06-07T22:33:34'));
+    });
+
+    it('Start working on a task with no start should send error', () => {
+        store.dispatch(new StopWorkingOnTask(0));
+    
+        const state : TaskStateModel = store.selectSnapshot(state => state.tasks);
+        expect(state.lastError).toBeInstanceOf(StopWorkingOnNotStartedTaskError);
+        const selectedTask = state.taskList.filter(task => task.id === 0)[0];
+        expect(selectedTask.stop).toBe(undefined);
     });
 });
