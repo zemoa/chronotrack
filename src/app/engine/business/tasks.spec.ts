@@ -5,8 +5,12 @@ import { AddTask, RemoveTask, StartWorkingOnTask, StopWorkingOnTask } from "../a
 import { TaskStateModel } from "../api/tasks.statemodel";
 import { DateUtils } from "./utils/date.utils";
 import { mockNg } from 'ng-mockito';
-import { mock, when } from 'ts-mockito';
+import { mock, when, verify, anything, instance } from 'ts-mockito';
 import { StopWorkingOnNotStartedTaskError } from "../api/tasks.dto";
+import { TaskRepository } from "../spi/tasks.repository";
+import { TasksUtils } from "./utils/tasks.utils";
+import { Task } from "../spi/tasks.entity";
+import { Injectable } from "@angular/core";
 
 export const INIT_STATE : TaskStateModel = {
     taskList: [{
@@ -19,12 +23,18 @@ export const INIT_STATE : TaskStateModel = {
 describe('Tasks', () => {
     let store: Store;
     let mockedDateUtils: DateUtils;
+    let taskRepository: TaskRepository;
     beforeEach(() => {
         mockedDateUtils = mock(DateUtils);
+        taskRepository = mock<TaskRepository>();
         when(mockedDateUtils.now).thenReturn(() => new Date('2023-06-07T21:19:22'));
+        when(taskRepository.create(anything())).thenCall((taskToSave: Task) => {
+            return taskToSave;
+        })
         TestBed.configureTestingModule({
             imports: [NgxsModule.forRoot([TasksStore])],
-            providers: [mockNg(mockedDateUtils)]
+            providers: [mockNg(mockedDateUtils), {provide : TaskRepository, useValue: instance(taskRepository)}, TasksUtils],
+            teardown: {destroyAfterEach: false} 
         });
         
         store = TestBed.inject(Store);
@@ -55,6 +65,8 @@ describe('Tasks', () => {
         expect(task2.stop).toBe(undefined);
         expect(task2.id).toBe(2);
         expect(task2.created).toEqual(new Date('2023-06-07T21:23:34'));
+
+        verify(taskRepository.create(anything())).twice();
     });
 
     it('Add a task and then remove it', () => {
@@ -75,6 +87,9 @@ describe('Tasks', () => {
         expect(state2.taskList.length).toBe(1);
         const task0 = state.taskList[0];
         expect(task0.id).toBe(0);
+
+        verify(taskRepository.create(anything())).once();
+        verify(taskRepository.delete(anything())).once();
     });
 
     it('Start working on a task', () => {
@@ -86,6 +101,8 @@ describe('Tasks', () => {
         const selectedTask = state.taskList.filter(task => task.id === 0)[0];
         expect(selectedTask.start).toEqual(new Date('2023-06-07T22:33:34'));
         expect(selectedTask.stop).toBe(undefined);
+
+        verify(taskRepository.update(anything())).once();
     });
 
     it('Stop working on a task', () => {
@@ -98,6 +115,8 @@ describe('Tasks', () => {
         const selectedTask = state.taskList.filter(task => task.id === 0)[0];
         expect(selectedTask.start).toEqual(new Date('2023-06-07T21:19:22'));
         expect(selectedTask.stop).toEqual(new Date('2023-06-07T22:33:34'));
+
+        verify(taskRepository.update(anything())).twice();
     });
 
     it('Start working on a task with no start should send error', () => {
@@ -107,5 +126,8 @@ describe('Tasks', () => {
         expect(state.lastError).toBeInstanceOf(StopWorkingOnNotStartedTaskError);
         const selectedTask = state.taskList.filter(task => task.id === 0)[0];
         expect(selectedTask.stop).toBe(undefined);
+
+        verify(taskRepository.update(anything())).never();
+        verify(taskRepository.create(anything())).never();
     });
 });
