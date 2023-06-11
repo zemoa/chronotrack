@@ -32,7 +32,7 @@ export class TasksStore {
             label: action.label,
             created: this.dateUtils.now()
         };
-        this.taskRepository.save(taskToSave);
+        this.taskRepository.create(taskToSave);
         ctx.patchState({
             taskList: [
                 ...state.taskList,
@@ -43,6 +43,7 @@ export class TasksStore {
 
     @Action(RemoveTask)
     removeTask(ctx: StateContext<TaskStateModel>, action: RemoveTask) {
+        this.taskRepository.delete(action.id);
         ctx.setState(
             patch<TaskStateModel>({
                 taskList: removeItem<TaskDto>(task => task.id === action.id)
@@ -52,30 +53,41 @@ export class TasksStore {
 
     @Action(StartWorkingOnTask)
     startWorkingOnTask(ctx: StateContext<TaskStateModel>, action: StartWorkingOnTask) {
-        ctx.setState(
-            patch<TaskStateModel>({
-                taskList: updateItem<TaskDto>(task => task.id === action.id,
-                    patch({start: this.dateUtils.now()}))
-            })
-        )
+        const task = this.findTask(ctx, action.id);
+        if(task) {
+            task.start = this.dateUtils.now();
+            this.taskRepository.update(task);
+            ctx.setState(
+                patch<TaskStateModel>({
+                    taskList: updateItem<TaskDto>(task => task.id === action.id,
+                        patch(task))
+                })
+            )
+        }
+        
     }
 
     @Action(StopWorkingOnTask)
     stopWorkingOnTask(ctx: StateContext<TaskStateModel>, action: StopWorkingOnTask) {
-        const state = ctx.getState();
-        const taskListfilterd = state.taskList.filter(task => task.id === action.id);
-        if(taskListfilterd && taskListfilterd.length == 1) {
-            const task = taskListfilterd[0];
+        const task = this.findTask(ctx, action.id);
+        if(task) {
             if(task.start) {
+                task.stop = this.dateUtils.now();
+                this.taskRepository.update(task);
                 ctx.setState(
                     patch<TaskStateModel>({
                         taskList: updateItem<TaskDto>(task => task.id === action.id,
-                            patch({stop: this.dateUtils.now()}))
+                            patch(task))
                     })
                 )
             } else {
                 ctx.setState(patch({lastError : new StopWorkingOnNotStartedTaskError("")}))
             }            
         }        
+    }
+
+    private findTask(ctx: StateContext<TaskStateModel>, id: number): TaskDto | undefined {
+        const state = ctx.getState();
+        return state.taskList.find(task => task.id === id);
     }
 }
