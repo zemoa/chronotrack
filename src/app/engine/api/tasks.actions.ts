@@ -17,3 +17,8 @@ export class StopWorkingOnTask {
     static readonly type ='[Task] Stop Working On Task';
     constructor(public id: number){}
 }
+
+export class LoadExistingTasks {
+    static readonly type ='[Task] Load Existing Tasks';
+    constructor(){}
+}

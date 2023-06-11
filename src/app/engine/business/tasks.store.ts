@@ -1,7 +1,7 @@
 import { Action, State, StateContext, Store } from "@ngxs/store";
 import { TaskStateModel } from "../api/tasks.statemodel";
 import { Injectable } from "@angular/core";
-import { AddTask, RemoveTask, StartWorkingOnTask, StopWorkingOnTask } from "../api/tasks.actions";
+import { AddTask, LoadExistingTasks, RemoveTask, StartWorkingOnTask, StopWorkingOnTask } from "../api/tasks.actions";
 import { patch, removeItem, updateItem } from "@ngxs/store/operators";
 import { StopWorkingOnNotStartedTaskError, TaskDto } from "../api/tasks.dto";
 import { DateUtils } from "./utils/date.utils";
@@ -12,23 +12,24 @@ import { TasksUtils } from "./utils/tasks.utils";
 @State<TaskStateModel>({
     name: 'tasks',
     defaults: {
+        loadingTasks: false,
         taskList: []
     }
 })
 @Injectable()
 export class TasksStore {
-    constructor(private store:Store, private dateUtils: DateUtils, private tasksUtils: TasksUtils, private taskRepository: TaskRepository){}
+    constructor(private store: Store, private dateUtils: DateUtils, private tasksUtils: TasksUtils, private taskRepository: TaskRepository) { }
 
     @Action(AddTask)
     addTask(ctx: StateContext<TaskStateModel>, action: AddTask) {
         const state = ctx.getState();
         let newTaskIndex = 0;
-        if(state.taskList.length > 0) {
+        if (state.taskList.length > 0) {
             newTaskIndex = state.taskList[state.taskList.length - 1].id + 1;
         }
-        
-        const taskToSave : Task = {
-            id:newTaskIndex,
+
+        const taskToSave: Task = {
+            id: newTaskIndex,
             label: action.label,
             created: this.dateUtils.now()
         };
@@ -54,7 +55,7 @@ export class TasksStore {
     @Action(StartWorkingOnTask)
     startWorkingOnTask(ctx: StateContext<TaskStateModel>, action: StartWorkingOnTask) {
         const task = this.findTask(ctx, action.id);
-        if(task) {
+        if (task) {
             task.start = this.dateUtils.now();
             this.taskRepository.update(task);
             ctx.setState(
@@ -64,14 +65,14 @@ export class TasksStore {
                 })
             )
         }
-        
+
     }
 
     @Action(StopWorkingOnTask)
     stopWorkingOnTask(ctx: StateContext<TaskStateModel>, action: StopWorkingOnTask) {
         const task = this.findTask(ctx, action.id);
-        if(task) {
-            if(task.start) {
+        if (task) {
+            if (task.start) {
                 task.stop = this.dateUtils.now();
                 this.taskRepository.update(task);
                 ctx.setState(
@@ -81,9 +82,25 @@ export class TasksStore {
                     })
                 )
             } else {
-                ctx.setState(patch({lastError : new StopWorkingOnNotStartedTaskError("")}))
-            }            
-        }        
+                ctx.setState(patch({ lastError: new StopWorkingOnNotStartedTaskError("") }))
+            }
+        }
+    }
+
+    @Action(LoadExistingTasks)
+    async loadExistingTasks(ctx: StateContext<TaskStateModel>) {
+        ctx.setState(
+            patch<TaskStateModel>({
+                loadingTasks: true
+            })
+        );
+        const tasksList = await this.taskRepository.loadAll();
+        ctx.setState(
+            patch<TaskStateModel>({
+                loadingTasks: false,
+                taskList: tasksList
+            })
+        );
     }
 
     private findTask(ctx: StateContext<TaskStateModel>, id: number): TaskDto | undefined {

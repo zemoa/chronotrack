@@ -1,24 +1,26 @@
 import { TestBed } from "@angular/core/testing";
 import { NgxsModule, Store } from "@ngxs/store";
 import { TasksStore } from "./tasks.store";
-import { AddTask, RemoveTask, StartWorkingOnTask, StopWorkingOnTask } from "../api/tasks.actions";
+import { AddTask, LoadExistingTasks, RemoveTask, StartWorkingOnTask, StopWorkingOnTask } from "../api/tasks.actions";
 import { TaskStateModel } from "../api/tasks.statemodel";
 import { DateUtils } from "./utils/date.utils";
 import { mockNg } from 'ng-mockito';
-import { mock, when, verify, anything, instance } from 'ts-mockito';
+import { mock, when, verify, anything, instance, reset } from 'ts-mockito';
 import { StopWorkingOnNotStartedTaskError } from "../api/tasks.dto";
 import { TaskRepository } from "../spi/tasks.repository";
 import { TasksUtils } from "./utils/tasks.utils";
 import { Task } from "../spi/tasks.entity";
 import { Injectable } from "@angular/core";
+import { delay, firstValueFrom } from "rxjs";
 
-export const INIT_STATE : TaskStateModel = {
+export const INIT_STATE: TaskStateModel = {
+    loadingTasks: false,
     taskList: [{
         id: 0,
         label: "Task 1",
         created: new Date('2023-06-07T19:00:01')
     }]
-  };
+};
 
 describe('Tasks', () => {
     let store: Store;
@@ -31,25 +33,38 @@ describe('Tasks', () => {
         when(taskRepository.create(anything())).thenCall((taskToSave: Task) => {
             return taskToSave;
         })
+        when(taskRepository.loadAll()).thenCall(async () => {
+            await delay(200);
+            return [{
+                id: 0,
+                label: "Task 1",
+                created: new Date('2023-06-07T19:00:01')
+            },
+            {
+                id: 1,
+                label: "Task 2",
+                created: new Date('2023-06-07T20:00:25')
+            }]
+        });
         TestBed.configureTestingModule({
             imports: [NgxsModule.forRoot([TasksStore])],
-            providers: [mockNg(mockedDateUtils), {provide : TaskRepository, useValue: instance(taskRepository)}, TasksUtils],
-            teardown: {destroyAfterEach: false} 
+            providers: [mockNg(mockedDateUtils), { provide: TaskRepository, useValue: instance(taskRepository) }, TasksUtils],
+            teardown: { destroyAfterEach: false }
         });
-        
+
         store = TestBed.inject(Store);
         store.reset({
             ...store.snapshot(),
             tasks: INIT_STATE
-          });
+        });
     })
 
     it('Add a task', () => {
         store.dispatch(new AddTask("A task 1"));
         when(mockedDateUtils.now).thenReturn(() => new Date('2023-06-07T21:23:34'));
         store.dispatch(new AddTask("A task 2"));
-    
-        const state : TaskStateModel = store.selectSnapshot(state => state.tasks);
+
+        const state: TaskStateModel = store.selectSnapshot(state => state.tasks);
         expect(state.lastError).toBe(undefined);
         expect(state.taskList.length).toBe(3);
         const task1 = state.taskList[1];
@@ -71,8 +86,8 @@ describe('Tasks', () => {
 
     it('Add a task and then remove it', () => {
         store.dispatch(new AddTask("A task"));
-    
-        const state : TaskStateModel = store.selectSnapshot(state => state.tasks);
+
+        const state: TaskStateModel = store.selectSnapshot(state => state.tasks);
         expect(state.lastError).toBe(undefined);
         expect(state.taskList.length).toBe(2);
         const task1 = state.taskList[1];
@@ -82,7 +97,7 @@ describe('Tasks', () => {
         expect(task1.id).toBe(1);
 
         store.dispatch(new RemoveTask(1));
-        const state2 : TaskStateModel = store.selectSnapshot(state => state.tasks);
+        const state2: TaskStateModel = store.selectSnapshot(state => state.tasks);
         expect(state2.lastError).toBe(undefined);
         expect(state2.taskList.length).toBe(1);
         const task0 = state.taskList[0];
@@ -95,8 +110,8 @@ describe('Tasks', () => {
     it('Start working on a task', () => {
         when(mockedDateUtils.now).thenReturn(() => new Date('2023-06-07T22:33:34'));
         store.dispatch(new StartWorkingOnTask(0));
-    
-        const state : TaskStateModel = store.selectSnapshot(state => state.tasks);
+
+        const state: TaskStateModel = store.selectSnapshot(state => state.tasks);
         expect(state.lastError).toBe(undefined);
         const selectedTask = state.taskList.filter(task => task.id === 0)[0];
         expect(selectedTask.start).toEqual(new Date('2023-06-07T22:33:34'));
@@ -109,8 +124,8 @@ describe('Tasks', () => {
         store.dispatch(new StartWorkingOnTask(0));
         when(mockedDateUtils.now).thenReturn(() => new Date('2023-06-07T22:33:34'));
         store.dispatch(new StopWorkingOnTask(0));
-    
-        const state : TaskStateModel = store.selectSnapshot(state => state.tasks);
+
+        const state: TaskStateModel = store.selectSnapshot(state => state.tasks);
         expect(state.lastError).toBe(undefined);
         const selectedTask = state.taskList.filter(task => task.id === 0)[0];
         expect(selectedTask.start).toEqual(new Date('2023-06-07T21:19:22'));
@@ -121,13 +136,27 @@ describe('Tasks', () => {
 
     it('Start working on a task with no start should send error', () => {
         store.dispatch(new StopWorkingOnTask(0));
-    
-        const state : TaskStateModel = store.selectSnapshot(state => state.tasks);
+
+        const state: TaskStateModel = store.selectSnapshot(state => state.tasks);
         expect(state.lastError).toBeInstanceOf(StopWorkingOnNotStartedTaskError);
         const selectedTask = state.taskList.filter(task => task.id === 0)[0];
         expect(selectedTask.stop).toBe(undefined);
 
         verify(taskRepository.update(anything())).never();
         verify(taskRepository.create(anything())).never();
+    });
+
+    it('When load is called, loading status is displayed, and then 2 tasks are loaded', async () => {
+        const loadEvent = store.dispatch(new LoadExistingTasks());
+        const state1: TaskStateModel = store.selectSnapshot(state => state.tasks);
+        expect(state1.loadingTasks).toBe(true);
+
+        await firstValueFrom(loadEvent);
+
+        const state2: TaskStateModel = store.selectSnapshot(state => state.tasks);
+        expect(state2.loadingTasks).toBe(false);
+        expect(state2.taskList.length).toBe(2);
+
+        verify(taskRepository.loadAll()).once();
     });
 });
