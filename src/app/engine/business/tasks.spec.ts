@@ -34,7 +34,7 @@ describe('Tasks', () => {
             return taskToSave;
         })
         when(taskRepository.loadAll()).thenCall(async () => {
-            await delay(200);
+            await new Promise(resolve => setTimeout(resolve, 200));
             return [{
                 id: 0,
                 label: "Task 1",

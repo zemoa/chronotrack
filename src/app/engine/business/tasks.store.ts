@@ -1,4 +1,4 @@
-import { Action, State, StateContext, Store } from "@ngxs/store";
+import { Action, Selector, State, StateContext, Store } from "@ngxs/store";
 import { TaskStateModel } from "../api/tasks.statemodel";
 import { Injectable } from "@angular/core";
 import { AddTask, LoadExistingTasks, RemoveTask, StartWorkingOnTask, StopWorkingOnTask } from "../api/tasks.actions";
@@ -89,6 +89,7 @@ export class TasksStore {
 
     @Action(LoadExistingTasks)
     async loadExistingTasks(ctx: StateContext<TaskStateModel>) {
+        console.debug("Lloading event received");
         ctx.setState(
             patch<TaskStateModel>({
                 loadingTasks: true
@@ -106,5 +107,16 @@ export class TasksStore {
     private findTask(ctx: StateContext<TaskStateModel>, id: number): TaskDto | undefined {
         const state = ctx.getState();
         return state.taskList.find(task => task.id === id);
+    }
+
+
+    @Selector()
+    static loadingTasks(state: TaskStateModel) {
+        return state.loadingTasks;
+    }
+
+    @Selector()
+    static taskList(state: TaskStateModel) {
+        return state.taskList;
     }
 }

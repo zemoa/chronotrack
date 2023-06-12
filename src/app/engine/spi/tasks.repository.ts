@@ -1,9 +1,28 @@
 import { Injectable } from "@angular/core";
 import { Task } from "./tasks.entity";
+import { delay } from "rxjs";
 
-export abstract class TaskRepository {
-    abstract create(tasks: Task): Task;
-    abstract update(task: Task): Task;
-    abstract delete(id: number): void;
-    abstract loadAll(): Promise<Task[]>;
+@Injectable({
+    providedIn: 'root'
+})
+export class TaskRepository {
+    create(tasks: Task): Task {
+        throw new Error("Not implemented yet!");
+    }
+    update(task: Task): Task{
+        throw new Error("Not implemented yet!");
+    }
+    delete(id: number): void{
+        throw new Error("Not implemented yet!");
+    }
+    async loadAll(): Promise<Task[]>{
+        console.debug("Start loading tasks");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.debug("End loading tasks");
+        return [{
+            created: new Date(),
+            id: 0,
+            label: "First task"
+        }];
+    }
 }
