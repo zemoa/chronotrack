@@ -16,11 +16,11 @@ export class TasksState {
     constructor(private tasksService: TasksService){}
 
     @Action(Tasks.FetchAll)
-    fetchAll(ctx: StateContext<TasksStateModel>) {
+    async fetchAll(ctx: StateContext<TasksStateModel>) {
         ctx.patchState({
             loading: true
         })
-        const fetchedTasks = this.tasksService.fetchAll()
+        const fetchedTasks = await this.tasksService.fetchAll()
         ctx.patchState({
             loading: false,
             tasks: fetchedTasks

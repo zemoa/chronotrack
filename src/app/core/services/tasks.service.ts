@@ -3,7 +3,7 @@ import { Task } from "../business/tasks.model";
 
 @Injectable()
 export class TasksService {
-    fetchAll(): Task[] {
+    async fetchAll(): Promise<Task[]> {
         return []
     }
 }

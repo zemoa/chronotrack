@@ -3,6 +3,9 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { HomeComponent } from './home.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
+import { NgxsModule } from '@ngxs/store';
+import { TasksState } from '../core/business/tasks.state';
+import { TasksService } from '../core/services/tasks.service';
 
 describe('HomeComponent', () => {
   let component: HomeComponent;
@@ -11,7 +14,8 @@ describe('HomeComponent', () => {
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [HomeComponent],
-      imports: [TranslateModule.forRoot(), RouterTestingModule]
+      imports: [TranslateModule.forRoot(), RouterTestingModule, NgxsModule.forRoot([TasksState])],
+      providers:[TasksService]
     }).compileComponents();
 
     fixture = TestBed.createComponent(HomeComponent);
