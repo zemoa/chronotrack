@@ -15,6 +15,9 @@ import { HomeModule } from './home/home.module';
 import { DetailModule } from './detail/detail.module';
 
 import { AppComponent } from './app.component';
+import { NgxsModule } from '@ngxs/store';
+import { TasksState } from './core/business/tasks.state';
+import { APP_CONFIG } from '../environments/environment';
 
 // AoT requires an exported function for factories
 const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>  new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -36,6 +39,9 @@ const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>  new Transl
         useFactory: httpLoaderFactory,
         deps: [HttpClient]
       }
+    }),
+    NgxsModule.forRoot([TasksState],{
+      developmentMode: !APP_CONFIG.production
     })
   ],
   providers: [],
