@@ -6,6 +6,9 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { NgxsModule } from '@ngxs/store';
 import { TasksState } from '../core/business/tasks.state';
 import { TasksService } from '../core/services/tasks.service';
+import { MockProvider } from 'ng-mocks';
+import { Task } from '../core/business/tasks.model';
+import { delay, of } from 'rxjs';
 
 describe('HomeComponent', () => {
   let component: HomeComponent;
@@ -15,7 +18,10 @@ describe('HomeComponent', () => {
     TestBed.configureTestingModule({
       declarations: [HomeComponent],
       imports: [TranslateModule.forRoot(), RouterTestingModule, NgxsModule.forRoot([TasksState])],
-      providers:[TasksService]
+      providers: [MockProvider(TasksService, {
+        save: (name: string) => of(new Task(name, '1234')),
+        fetchAll: () => of([new Task('Task 1', '1'), new Task('Task 2', '2')]).pipe(delay(200))
+      })]
     }).compileComponents();
 
     fixture = TestBed.createComponent(HomeComponent);

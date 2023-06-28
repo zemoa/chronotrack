@@ -1,13 +1,15 @@
 import { Injectable } from "@angular/core";
 import { Task } from "../business/tasks.model";
+import { Observable, of, single } from "rxjs";
 
 @Injectable()
 export class TasksService {
-    async fetchAll(): Promise<Task[]> {
-        return []
+    fetchAll(): Observable<Task[]> {
+        return of([])
     }
 
-    async save(name: string): Promise<Task> {
-        return new Task(name, '1')
+    save(name: string): Observable<Task> {
+        console.log('tototot')
+        return of(new Task(name, '1'))
     }
 }

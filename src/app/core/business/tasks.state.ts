@@ -21,21 +21,20 @@ export class TasksState {
         ctx.patchState({
             loading: true
         })
-        const fetchedTasks = await this.tasksService.fetchAll()
-        ctx.patchState({
+        this.tasksService.fetchAll().subscribe(fetchedTasks => ctx.patchState({
             loading: false,
             tasks: fetchedTasks
-        })
+        }))
     }  
     
     @Action(Tasks.Add)
     async addTask(ctx: StateContext<TasksStateModel>, action: Tasks.Add) {
-        const newTask = await this.tasksService.save(action.name)
-        ctx.setState(
+        this.tasksService.save(action.name)
+        .subscribe(newTask => ctx.setState(
             patch<TasksStateModel>({
                 tasks: insertItem<Task>(newTask)
             })
-        )
+        ))
     }
 }
 
