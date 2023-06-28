@@ -1,8 +1,9 @@
 import { Injectable } from "@angular/core";
 import { Action, State, StateContext, createPropertySelectors } from "@ngxs/store";
 import { Tasks } from "./tasks.action";
-import { TasksStateModel } from "./tasks.model";
+import { Task, TasksStateModel } from "./tasks.model";
 import { TasksService } from "../services/tasks.service";
+import { append, insertItem, patch } from "@ngxs/store/operators";
 
 @State<TasksStateModel>({
     name: 'tasks',
@@ -25,7 +26,17 @@ export class TasksState {
             loading: false,
             tasks: fetchedTasks
         })
-    }    
+    }  
+    
+    @Action(Tasks.Add)
+    async addTask(ctx: StateContext<TasksStateModel>, action: Tasks.Add) {
+        const newTask = await this.tasksService.save(action.name)
+        ctx.setState(
+            patch<TasksStateModel>({
+                tasks: insertItem<Task>(newTask)
+            })
+        )
+    }
 }
 
 

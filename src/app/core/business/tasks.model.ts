@@ -4,5 +4,10 @@ export interface TasksStateModel {
 }
 
 export class Task {
-    constructor(private name: string){}
+    readonly name: string;
+    readonly id: string;
+    constructor(name: string, id: string){
+        this.name = name;
+        this.id = id;
+    }
 }

@@ -6,4 +6,8 @@ export class TasksService {
     async fetchAll(): Promise<Task[]> {
         return []
     }
+
+    async save(name: string): Promise<Task> {
+        return new Task(name, '1')
+    }
 }
