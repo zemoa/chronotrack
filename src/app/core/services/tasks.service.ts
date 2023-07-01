@@ -16,4 +16,8 @@ export class TasksService {
     remove(id: string): Observable<boolean> {
         return of(true)
     }
+
+    select(id: string): Observable<Task> {
+        return of(new Task("Task 1", "1", true))
+    }
 }

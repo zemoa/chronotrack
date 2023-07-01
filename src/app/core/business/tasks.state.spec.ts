@@ -18,6 +18,7 @@ describe('Tasks', () => {
     beforeEach(() => {
         return MockBuilder(NgxsModule.forRoot([TasksState]))
         .mock(TasksService, {
+            select: id => of(new Task('Task 1', '1', true)),
             save: (name: string) => of(new Task(name, '1234')),
             fetchAll: () => of([new Task('Task 1', '1'), new Task('Task 2', '2')]).pipe(delay(200)),
             remove: () => of(true)
@@ -78,4 +79,25 @@ describe('Tasks', () => {
         expect(task.name).toEqual('Task 2')
         expect(task.id).toBe('2')
     });
+
+    it('Select a task', async () => {
+        console.log('Select a task')
+        const store = TestBed.inject(Store);
+        store.reset({
+            ...store.snapshot(),
+            tasks: {
+                loading: false,
+                tasks: [new Task("Task 1", "1"), new Task("Task 2", "2")]
+            } as TasksStateModel
+        })
+
+        await firstValueFrom(store.dispatch(new Tasks.Select('1')));
+
+        let tasksState: TasksStateModel = store.selectSnapshot(state => state.tasks);
+        const selectedTaskList = tasksState.tasks.filter(task => task.selected);
+        expect(selectedTaskList.length).toEqual(1)
+        expect(selectedTaskList[0].id).toEqual("1")
+        expect(selectedTaskList[0].name).toEqual("Task 1")
+        expect(selectedTaskList[0].selected).toBe(true)
+    })
 })
