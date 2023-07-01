@@ -17,4 +17,8 @@ export namespace Tasks {
         static readonly type = '[Tasks] Select';
         constructor(public id: string){}
     }
+    export class StartWorking {
+        static readonly type = '[Tasks] Start working';
+        constructor(){}
+    }
 }

@@ -39,7 +39,6 @@ export class TasksState {
 
     @Action(Tasks.Remove)
     removeTask(ctx: StateContext<TasksStateModel>, action: Tasks.Remove) {
-        console.log(`Remove tasks <${action.id}>`)
         this.tasksService.remove(action.id)
             .subscribe(() => ctx.setState(
                 patch<TasksStateModel>({
@@ -50,13 +49,30 @@ export class TasksState {
 
     @Action(Tasks.Select)
     selectTask(ctx: StateContext<TasksStateModel>, action: Tasks.Select) {
-
         this.tasksService.select(action.id)
             .subscribe(taskResponse => ctx.setState(
                 patch<TasksStateModel>({
-                    tasks: updateItem(task => task.id === taskResponse.id, taskResponse)
+                    tasks: updateItem(task => task.id === taskResponse.id, patch({
+                        selected: true
+                    }))
                 })
             ))
+    }
+
+    @Action(Tasks.StartWorking)
+    startWorking(ctx: StateContext<TasksStateModel>, action: Tasks.StartWorking) {
+        const selectedTask = ctx.getState().tasks.find(task => task.selected) 
+        if(selectedTask) {
+            this.tasksService.startWorking(selectedTask.id)
+            .subscribe(workload => ctx.setState(
+                patch<TasksStateModel>({
+                    tasks: updateItem(task => task.id === selectedTask.id, patch({
+                        workLoads: workload
+                    }))
+                })
+            ))
+        }
+        
     }
 }
 
