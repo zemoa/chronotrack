@@ -12,4 +12,8 @@ export class TasksService {
         console.log('tototot')
         return of(new Task(name, '1'))
     }
+
+    remove(id: string): Observable<boolean> {
+        return of(true)
+    }
 }

@@ -3,7 +3,7 @@ import { Action, State, StateContext, createPropertySelectors } from "@ngxs/stor
 import { Tasks } from "./tasks.action";
 import { Task, TasksStateModel } from "./tasks.model";
 import { TasksService } from "../services/tasks.service";
-import { append, insertItem, patch } from "@ngxs/store/operators";
+import { append, insertItem, patch, removeItem } from "@ngxs/store/operators";
 
 @State<TasksStateModel>({
     name: 'tasks',
@@ -17,7 +17,7 @@ export class TasksState {
     constructor(private tasksService: TasksService){}
 
     @Action(Tasks.FetchAll)
-    async fetchAll(ctx: StateContext<TasksStateModel>) {
+    fetchAll(ctx: StateContext<TasksStateModel>) {
         ctx.patchState({
             loading: true
         })
@@ -28,11 +28,22 @@ export class TasksState {
     }  
     
     @Action(Tasks.Add)
-    async addTask(ctx: StateContext<TasksStateModel>, action: Tasks.Add) {
+    addTask(ctx: StateContext<TasksStateModel>, action: Tasks.Add) {
         this.tasksService.save(action.name)
         .subscribe(newTask => ctx.setState(
             patch<TasksStateModel>({
                 tasks: insertItem<Task>(newTask)
+            })
+        ))
+    }
+
+    @Action(Tasks.Remove)
+    removeTask(ctx: StateContext<TasksStateModel>, action: Tasks.Remove) {
+        console.log(`Remove tasks <${action.id}>`)
+        this.tasksService.remove(action.id)
+        .subscribe(() => ctx.setState(
+            patch<TasksStateModel>({
+                tasks: removeItem(task => task.id === action.id)
             })
         ))
     }
