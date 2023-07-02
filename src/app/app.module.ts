@@ -42,7 +42,7 @@ const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>  new Transl
     }),
     NgxsModule.forRoot([TasksState],{
       developmentMode: !APP_CONFIG.production
-    })
+    }),
   ],
   providers: [],
   bootstrap: [AppComponent]
