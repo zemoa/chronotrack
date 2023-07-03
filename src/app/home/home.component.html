@@ -2,7 +2,18 @@
   <h1 class="title">
     {{ 'PAGES.HOME.TITLE' | translate }}
   </h1>
-  <app-task-item></app-task-item>
+
   <h2>{{ loading$ | async }}</h2>
+
+  <div class="task-content" *ngIf="loading$ | async">
+    <app-task-item [loadingMode]="true"></app-task-item>
+    <app-task-item [loadingMode]="true"></app-task-item>
+    <app-task-item [loadingMode]="true"></app-task-item>
+  </div>
+  <div class="task-content" *ngIf="!(loading$ | async)">
+    <app-task-item [loadingMode]="true"></app-task-item>
+    <app-task-item [loadingMode]="true"></app-task-item>
+    <app-task-item [loadingMode]="true"></app-task-item>
+  </div>
   <a routerLink="/detail">{{ 'PAGES.HOME.GO_TO_DETAIL' | translate }}</a>
 </div>

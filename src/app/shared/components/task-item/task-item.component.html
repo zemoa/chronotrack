@@ -1,6 +1,16 @@
-<div class="flex">
-    <p-skeleton shape="circle" size="4rem"></p-skeleton>
-    <div>
-        <p-skeleton></p-skeleton>
-    </div>
-</div>
+<p-card>
+    <ng-template pTemplate="content">
+        <div class="task">
+            <div>
+                <p-skeleton *ngIf="loadingMode" shape="circle" size="3rem"></p-skeleton>
+                <p-button *ngIf="!loadingMode" icon="pi pi-play"
+                    styleClass="p-button-rounded p-button-secondary p-button-raised"></p-button>
+            </div>
+            <div>
+                <p-skeleton *ngIf="loadingMode"></p-skeleton>
+                <p *ngIf="!loadingMode">{{title}}</p>
+            </div>
+        </div>
+    </ng-template>
+    
+</p-card>

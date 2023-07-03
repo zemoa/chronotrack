@@ -1,0 +1,16 @@
+
+:host {
+    ::ng-deep .p-card-content {
+        padding: 0;
+    }
+    .task {
+        display: flex;
+        gap: 20px;
+        div:last-child {
+            display: flex;
+            flex-grow: 1;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+    }
+}

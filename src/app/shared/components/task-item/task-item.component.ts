@@ -7,4 +7,5 @@ import { Component, Input } from '@angular/core';
 })
 export class TaskItemComponent {
   @Input() loadingMode = true
+  @Input() title!: string
 }
