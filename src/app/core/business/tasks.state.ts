@@ -78,5 +78,5 @@ export class TasksState {
 
 
 export class TasksSelectors {
-    static slices = createPropertySelectors<TasksStateModel>(TasksState)
+    static  slices = createPropertySelectors<TasksStateModel>(TasksState)
 }
