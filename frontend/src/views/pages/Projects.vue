@@ -1,82 +1,49 @@
 <script lang="ts" setup>
-import {reactive, ref} from 'vue'
-import {Greet} from '@wails/go/main/App'
-import {useProjectsStore} from '@/stores/store.project'
+import { onMounted, reactive, ref } from 'vue'
+import { Greet } from '@wails/go/main/App'
+import { useProjectsStore } from '@/stores/store.project'
+import {
+  Plus
+} from '@element-plus/icons-vue'
 
 const projectStore = useProjectsStore()
 
-const data = reactive({
-  name: "",
-  resultText: "Please enter your name below 👇",
-})
+const newProjectName = ref<string>()
 
-function greet() {
-  Greet(data.name).then(result => {
-    data.resultText = result
-  })
+const addProject = function () {
+  if (newProjectName.value) {
+    projectStore.addProject(newProjectName.value)
+    newProjectName.value = undefined
+  }
 }
 
+onMounted(() => {
+  projectStore.load()
+})
 
 </script>
 
 <template>
-  <main>
-    <div id="result" class="result">{{ data.resultText }}</div>
-    <div id="input" class="input-box">
-      <input id="name" v-model="data.name" autocomplete="off" class="input" type="text"/>
-      <button class="btn" @click="greet">Greet</button>
-    </div>
-
-    <button class="btn" @click="projectStore.load">Load</button>
-    <select v-model="projectStore.selectedProjectId">
-      <option>Choose</option>
-      <option v-for="project in projectStore.projects" :value="project.id">{{ project.name }}</option>
-    </select>
-    <div v-for="task in projectStore.projectTasks">{{ task.id }} - {{ task.name }}</div>
-  </main>
+  <el-row justify="center">
+    <el-col :span="8">
+      <el-input v-model="newProjectName" placeholder="Please input" />
+    </el-col>
+    <el-col :span="2">
+      <el-button type="primary" :icon="Plus" circle @click="addProject" />
+    </el-col>
+  </el-row>
+  <el-row>
+    <el-col :span="24">
+      <el-card v-for="project in projectStore.projects" :key="project.id" shadow="hover" class="project-item">
+        {{ project.id }} - {{ project.name }}
+      </el-card>
+    </el-col>
+  </el-row>
 </template>
 
 <style scoped>
-.result {
-  height: 20px;
-  line-height: 20px;
-  margin: 1.5rem auto;
-}
-
-.input-box .btn {
-  width: 60px;
-  height: 30px;
-  line-height: 30px;
-  border-radius: 3px;
-  border: none;
-  margin: 0 0 0 20px;
-  padding: 0 8px;
+.project-item {
+  margin-top: 5px;
   cursor: pointer;
-}
-
-.input-box .btn:hover {
-  background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%);
-  color: #333333;
-}
-
-.input-box .input {
-  border: none;
-  border-radius: 3px;
-  outline: none;
-  height: 30px;
-  line-height: 30px;
-  padding: 0 10px;
-  background-color: rgba(240, 240, 240, 1);
-  -webkit-font-smoothing: antialiased;
-}
-
-.input-box .input:hover {
-  border: none;
-  background-color: rgba(255, 255, 255, 1);
-}
-
-.input-box .input:focus {
-  border: none;
-  background-color: rgba(255, 255, 255, 1);
 }
 </style>

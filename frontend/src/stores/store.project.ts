@@ -12,8 +12,8 @@ export const useProjectsStore = defineStore('projects', () => {
         if(selectedProjectId.value === undefined) return []
         return tasks.value.filter(task => task.projectId === selectedProjectId.value)
     })
-    function addProject() {
-        projects.value = [...projects.value, new Project(1, 'toto')]
+    function addProject(name: string) {
+        projects.value = [...projects.value, new Project(projects.value.sort((p1, p2) => p2.id - p1.id)[0].id+1, name)]
     }
 
     function load() {

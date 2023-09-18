@@ -27,7 +27,7 @@ const startWorking = () => {
     } else {
         workloadStore.workOnTask(selectedValue.value, undefined)
     }
-    
+
 }
 </script>
 
