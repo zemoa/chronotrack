@@ -4,18 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
-
-type ProjectStorageMock struct {
-	mock.Mock
-	ProjectStorage
-}
-
-func (m *ProjectStorageMock) Create(label string) ProjectData {
-	args := m.Called(label)
-	return args.Get(0).(ProjectData)
-}
 
 func TestCreateProject(t *testing.T) {
 	projectStorageMock := new(ProjectStorageMock)
@@ -28,4 +17,12 @@ func TestCreateProject(t *testing.T) {
 	assert.Equal(t, uint(0), result.id)
 	assert.Equal(t, label, result.label)
 	projectStorageMock.AssertNumberOfCalls(t, "Create", 1)
+}
+
+func TestDeleteProject(t *testing.T) {
+	projectStorageMock := new(ProjectStorageMock)
+	projectStorageMock.On("Delete", uint(0)).Return()
+	sut := NewProjectService(projectStorageMock)
+	sut.Delete(0)
+	projectStorageMock.AssertNumberOfCalls(t, "Delete", 1)
 }
