@@ -19,4 +19,5 @@ type TaskData struct {
 
 type TaskStorage interface {
 	Create(projectId uint, label string) TaskData
+	Find(query string) []TaskData
 }

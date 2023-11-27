@@ -61,3 +61,21 @@ func (tts *TaskTestSuite) TestCreateTaskWithNonExistingProjectMustFail() {
 	_, error := tts.sut.Create(projectId, label)
 	assert.NotNil(tts.T(), error)
 }
+
+func (tts *TaskTestSuite) TestSearchTasks() {
+	existingTask := []TaskData{
+		{id: 0, projectId: 0, label: "Task 00"},
+		{id: 1, projectId: 0, label: "Task 01"},
+		{id: 2, projectId: 1, label: "Task 10"},
+		{id: 3, projectId: 2, label: "Task 20"},
+		{id: 4, projectId: 3, label: "Task 21"},
+	}
+	tts.taskStorage.On("Find", mock.AnythingOfType("string")).Return(existingTask)
+	foundTasks := tts.sut.Find("Task")
+
+	assert.Equal(tts.T(), 5, len(foundTasks))
+	assert.Equal(tts.T(), uint(0), foundTasks[0].id)
+	assert.Equal(tts.T(), "Task 00", foundTasks[0].label)
+	assert.Equal(tts.T(), uint(4), foundTasks[4].id)
+	assert.Equal(tts.T(), "Task 21", foundTasks[4].label)
+}

@@ -31,3 +31,8 @@ func (m *TaskStorageMock) Create(projectId uint, label string) TaskData {
 	args := m.Called(projectId, label)
 	return args.Get(0).(TaskData)
 }
+
+func (m *TaskStorageMock) Find(query string) []TaskData {
+	args := m.Called(query)
+	return args.Get(0).([]TaskData)
+}

@@ -6,6 +6,7 @@ import (
 
 type ITasksService interface {
 	Create(projectId uint, label string) (*TaskDto, error)
+	Find(query string) []TaskDto
 }
 
 type TaskDto struct {
@@ -28,6 +29,18 @@ func (ts *TasksService) Create(projectId uint, label string) (*TaskDto, error) {
 		id:    task.id,
 		label: task.label,
 	}, nil
+}
+
+func (ts *TasksService) Find(query string) []TaskDto {
+	foundTasks := ts.taskStorage.Find(query)
+	var result []TaskDto
+	for _, task := range foundTasks {
+		result = append(result, TaskDto{
+			id:    task.id,
+			label: task.label,
+		})
+	}
+	return result
 }
 
 func NewTasksService(taskStorage TaskStorage, projectStorage ProjectStorage) ITasksService {
